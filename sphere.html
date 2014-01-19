@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+<script>
+
+function main() {
+    require(['jquery', 'sphere'], function($, Sphere) {
+        $(function() {
+            var canvas = $('#canvas').get(0),
+                complexityPicker = $('#complexity-picker').get(0),
+                sphere = new Sphere(canvas, complexityPicker);
+                
+            sphere.run();
+        });
+    });
+}
+    
+</script>
+
+<script data-main="src/config.js" src="bower_components/requirejs/require.js"></script>
+    
+</head>
+
+<body>
+
+<h1>Rotating Sphere</h1>
+
+<canvas id="canvas" width="800" height="600">
+</canvas>
+<form>
+    <label for="complexity">Triangles:</label>
+    <select id="complexity-picker" name="complexity">
+        <option value="0">8</option>    
+        <option value="1">32</option>
+        <option value="2">128</option>
+        <option value="3">512</option>
+        <option value="4">2048</option>
+        <option value="5" selected="selected">8192</option>
+    </select>
+</form>
+
+</body>
+    
+</html>

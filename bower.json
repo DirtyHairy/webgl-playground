@@ -1,0 +1,17 @@
+{
+    "name": "webgl-playground",
+    "authors": [
+        {
+            "name": "Christian Speckner",
+            "email": "cnspeckn@googlemail.com"
+        }
+    ],
+    "license": "MIT",
+    "dependencies": {
+        "jquery": "2.*",
+        "lodash": "2.*",
+        "requirejs": "2.*",
+        "text": "2.*",
+        "gl-matrix": "2.2.*"
+    }
+}
