@@ -112,7 +112,7 @@ define(['underscore', 'jquery', 'webgl', 'geometry', 'glmatrix',
                 gl = me._webGl.getContext();
             
             gl.clearColor(0, 0, 0, 1);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
             gl.drawElements(gl.TRIANGLES, 3 * me._triangleCounts[me._polyhedronIndex], gl.UNSIGNED_SHORT, 0);
         },
