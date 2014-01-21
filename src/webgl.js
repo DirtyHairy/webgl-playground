@@ -65,6 +65,7 @@ define(['underscore', 'webglutils', 'glmatrix'],
         
             if (location === null) throw new Error('unable to determine uniform location');
         
+            gl.useProgram(program);
             gl.uniformMatrix4fv(location, false, matrix);
         },
         
