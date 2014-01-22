@@ -1,7 +1,9 @@
 define(['jquery', 'underscore', 'webgl',
         'text!shaders/glow_point.vsh', 'text!shaders/glow_point.fsh',
-        'text!shaders/glow_post.vsh', 'text!shaders/glow_blit.fsh'],
-    function($, _, WebGl, pointVshSource, pointFshSource, postVshSource, blitFshSource)
+        'text!shaders/glow_post.vsh', 'text!shaders/glow_blit.fsh',
+        'text!shaders/glow_decay.fsh'],
+    function($, _, WebGl, pointVshSource, pointFshSource, postVshSource,
+        blitFshSource, decayFshSource)
 {
     
     "use strict";
@@ -19,6 +21,7 @@ define(['jquery', 'underscore', 'webgl',
         
         _pointShader: null,
         _blitShader: null,
+        _decayShader: null,
         
         _vertexBuffer: null,
         _postVertexBuffer: null,
@@ -26,6 +29,11 @@ define(['jquery', 'underscore', 'webgl',
         _textures: null,
         _depthBuffers: null,
         _frameBuffers: null,
+        
+        _blitIndex: 1,
+        _decayIndex: 0,
+        
+        _pointQueue: null,
         
         _createShaderProgram: function(vshSource, fshSource) {
             var me = this,
@@ -121,6 +129,9 @@ define(['jquery', 'underscore', 'webgl',
                     throw new Error('unable to setup frame buffers');
                 }
                 
+                gl.clearColor(0, 0, 0, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                
                 me._frameBuffers.push(framebuffer);
             }
         },
@@ -129,7 +140,7 @@ define(['jquery', 'underscore', 'webgl',
             var me = this,
                 gl = me._webgl.getContext();
             
-            _.each([me._pointShader, me._blitShader], function(shader) {
+            _.each([me._pointShader, me._blitShader, me._decayShader], function(shader) {
                 var widthLocation = gl.getUniformLocation(shader, 'u_viewportWidth'),
                     heightLocation = gl.getUniformLocation(shader, 'u_viewportHeight');
             
@@ -158,6 +169,15 @@ define(['jquery', 'underscore', 'webgl',
             gl.uniform1i(location, textureIndex);
         },
         
+        _setDecayTexture: function(textureIndex) {
+            var me = this,
+                gl = me._webgl.getContext(),
+                location = gl.getUniformLocation(me._decayShader, 'u_decayTexture');
+            
+            gl.useProgram(me._decayShader);
+            gl.uniform1i(location, textureIndex);
+        },
+        
         _drawPoints: function(points) {
             var me = this,
                 webgl = me._webgl,
@@ -175,28 +195,62 @@ define(['jquery', 'underscore', 'webgl',
             var me = this,
                 gl = me._webgl.getContext();
             
-            me._setBlitTexture(0);
+            me._setBlitTexture(me._blitIndex);
             
             gl.useProgram(me._blitShader);
             me._webgl.bindBufferToAttribute(me._blitShader, me._postVertexBuffer, 2, 'a_vertexPosition');
             gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
         },
         
-        _draw: function() {
+        _decay: function() {
             var me = this,
                 gl = me._webgl.getContext();
             
-            gl.bindFramebuffer(gl.FRAMEBUFFER, me._frameBuffers[0]);
+            me._setDecayTexture(me._decayIndex);
             
-            gl.clearColor(0, 0, 0, 1);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.useProgram(me._decayShader);
+            me._webgl.bindBufferToAttribute(me._decayShader, me._postVertexBuffer, 2, 'a_vertexPosition');
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+        },
+        
+        _draw: function() {
+            var me = this,
+                gl = me._webgl.getContext();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, me._frameBuffers[me._blitIndex]);
             
-            me._setPointSize(100);
-            me._drawPoints([[100, 100], [200, 200], [300, 200]]);
+            me._decay();
+            
+            if (me._pointQueue && me._pointQueue.length > 0) {
+                me._setPointSize(100);
+                me._drawPoints(me._pointQueue);
+                
+                me._pointQueue = null;
+            }
             
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             
             me._blit();
+            
+            me._swapBuffers();
+        },
+        
+        _swapBuffers: function() {
+            var me = this,
+                tmp = me._blitIndex;
+            
+            me._blitIndex = me._decayIndex;
+            me._decayIndex = tmp;
+        },
+        
+        _animate: function() {
+            var me = this;
+            
+            var handler = function() {
+                me._draw();
+                setTimeout(_.bind(me._animate, me), 100);
+            };
+            
+            handler();
         },
         
         run: function() {
@@ -206,12 +260,14 @@ define(['jquery', 'underscore', 'webgl',
             
             me._pointShader = me._createShaderProgram(pointVshSource, pointFshSource);
             me._blitShader = me._createShaderProgram(postVshSource, blitFshSource);
+            me._decayShader = me._createShaderProgram(postVshSource, decayFshSource);
             
             me._configureViewportDimensions();
             me._createVertexBuffers();
             me._createFrameBuffers();
             
-            me._draw();
+            me._pointQueue = [[100, 100], [200, 200], [300, 200]];
+            me._animate();
         }
     });
     
