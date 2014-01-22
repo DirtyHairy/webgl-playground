@@ -152,12 +152,27 @@ define(['jquery', 'underscore', 'webgl',
         },
         
         _setPointSize: function(size) {
-            var me = this,
-                gl = me._webgl.getContext(),
-                location = gl.getUniformLocation(me._pointShader, 'u_pointSize');
+            var me = this;
             
-            gl.useProgram(me._pointShader);
-            gl.uniform1f(location, size);
+            me._webgl.setUniformFloat(me._pointShader, size, 'u_pointSize');
+        },
+        
+        _setBleedFactor: function(bleedFactor) {
+            var me = this;
+            
+            me._webgl.setUniformFloat(me._decayShader, bleedFactor, 'u_bleedFactor');
+        },
+        
+        _setExponentialDecay: function(exponentialDecay) {
+            var me = this;
+            
+            me._webgl.setUniformFloat(me._decayShader, exponentialDecay, 'u_exponentialDecay');
+        },
+        
+        _setLinearDecay: function(linearDecay) {
+            var me = this;
+            
+            me._webgl.setUniformFloat(me._decayShader, linearDecay, 'u_linearDecay');
         },
         
         _setBlitTexture: function(textureIndex) {
@@ -221,7 +236,6 @@ define(['jquery', 'underscore', 'webgl',
             me._decay();
             
             if (me._pointQueue && me._pointQueue.length > 0) {
-                me._setPointSize(100);
                 me._drawPoints(me._pointQueue);
                 
                 me._pointQueue = null;
@@ -247,7 +261,7 @@ define(['jquery', 'underscore', 'webgl',
             
             var handler = function() {
                 me._draw();
-                setTimeout(_.bind(me._animate, me), 100);
+                setTimeout(_.bind(me._animate, me), 33);
             };
             
             handler();
@@ -265,6 +279,11 @@ define(['jquery', 'underscore', 'webgl',
             me._configureViewportDimensions();
             me._createVertexBuffers();
             me._createFrameBuffers();
+            
+            me._setPointSize(100);
+            me._setBleedFactor(0.8);
+            me._setExponentialDecay(0.99);
+            me._setLinearDecay(0.0005);
             
             me._pointQueue = [[100, 100], [200, 200], [300, 200]];
             me._animate();

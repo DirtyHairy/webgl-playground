@@ -69,6 +69,17 @@ define(['underscore', 'webglutils', 'glmatrix'],
             gl.uniformMatrix4fv(location, false, matrix);
         },
         
+        setUniformFloat: function(program, value, name) {
+            var me = this,
+                gl = me.getContext(),
+                location = gl.getUniformLocation(program, name);
+        
+            if (location === null) throw new Error('unable to determine uniform location');
+        
+            gl.useProgram(program);
+            gl.uniform1f(location, value);
+        },
+        
         bindBufferToAttribute: function(program, buffer, itemSize, name) {
             var me = this,
                 gl = this.getContext(),
