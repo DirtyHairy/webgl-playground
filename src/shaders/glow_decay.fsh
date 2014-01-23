@@ -1,5 +1,7 @@
 precision mediump float;
 
+varying vec2 v_textureCoordinates;
+
 uniform sampler2D u_decayTexture;
 uniform float u_viewportHeight;
 uniform float u_viewportWidth;
@@ -7,35 +9,34 @@ uniform float u_bleedFactor;
 uniform float u_exponentialDecay;
 uniform float u_linearDecay;
 
-float getBrightness(float x, float y) {
+float getBrightness(float s, float t) {
     return (
-            x >= 0.0 && y >= 0.0 &&
-            x < u_viewportWidth && y < u_viewportHeight
+            s >= 0.0 && t >= 0.0 &&
+            s <= 1.0 && t <= 1.0
         ) ?
-        texture2D(u_decayTexture,vec2(
-            x / u_viewportWidth, y / u_viewportHeight
-        )).r :
-        0.0;
+        texture2D(u_decayTexture,vec2(s, t)).r : 0.0;
 }
 
 void main() {
-    float   x = gl_FragCoord.x,
-            y = gl_FragCoord.y;
+    float   s = v_textureCoordinates.s,
+            t = v_textureCoordinates.t,
+            ds = 1.0 / u_viewportWidth,
+            dt = 1.0 / u_viewportHeight;
             
     float   factorCenter = 1.0 - u_bleedFactor,
             factorBorder = u_bleedFactor / 8.0;
-            
-    float   brightness = factorCenter * getBrightness(x, y) +
+
+    float   brightness = factorCenter * getBrightness(s, t) +
             factorBorder * (
-                getBrightness(x-1.0, y-1.0) + getBrightness(x-1.0, y) +
-                getBrightness(x-1.0, y+1.0) + getBrightness(x, y-1.0) +
-                getBrightness(x, y+1.0) + getBrightness(x+1.0, y-1.0) +
-                getBrightness(x+1.0, y) + getBrightness(x+1.0, y+1.0)
+                getBrightness(s-ds, t-dt) + getBrightness(s-ds, t) +
+                getBrightness(s-ds, t+dt) + getBrightness(s, t-dt) +
+                getBrightness(s, t+dt) + getBrightness(s+ds, t-dt) +
+                getBrightness(s+ds, t) + getBrightness(s+ds, t+dt)
             );
-    
+  
     brightness *= u_exponentialDecay;
     brightness -= u_linearDecay;
-    
+
     brightness = max(min(brightness, 1.0), 0.0);
 
     gl_FragColor = vec4(brightness, brightness, brightness, 1.0);

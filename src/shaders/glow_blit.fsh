@@ -1,10 +1,8 @@
 precision mediump float;
 
 uniform sampler2D u_blitTexture;
-uniform float u_viewportHeight;
-uniform float u_viewportWidth;
+varying vec2 v_textureCoordinates;
 
 void main() {
-    gl_FragColor = texture2D(u_blitTexture,
-        vec2(gl_FragCoord.x / u_viewportWidth, gl_FragCoord.y / u_viewportHeight));
+    gl_FragColor = texture2D(u_blitTexture, v_textureCoordinates);
 }

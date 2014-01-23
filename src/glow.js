@@ -146,8 +146,12 @@ define(['jquery', 'underscore', 'webgl',
             
                 gl.useProgram(shader);
             
-                gl.uniform1f(widthLocation, gl.drawingBufferWidth);
-                gl.uniform1f(heightLocation, gl.drawingBufferHeight); 
+                if (widthLocation) {
+                    gl.uniform1f(widthLocation, gl.drawingBufferWidth);
+                }
+                if (heightLocation) {
+                    gl.uniform1f(heightLocation, gl.drawingBufferHeight); 
+                }
             });
         },
         
