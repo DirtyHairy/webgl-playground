@@ -289,7 +289,7 @@ define(['jquery', 'underscore', 'webgl',
             me._setExponentialDecay(0.99);
             me._setLinearDecay(0.0005);
             
-            me._pointQueue = [[100, 100], [200, 200], [300, 200]];
+            me._pointQueue = [[100, 100], [200, 200], [300, 200], [500, 200]];
             me._animate();
         }
     });
