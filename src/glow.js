@@ -12,6 +12,26 @@ define(['jquery', 'underscore', 'webgl',
         var me = this;
         
         me._canvas = canvas;
+        
+        me._webgl = new WebGl(me._canvas);
+        
+        me._pointShader = me._createShaderProgram(pointVshSource, pointFshSource);
+        me._blitShader = me._createShaderProgram(postVshSource, blitFshSource);
+        me._decayShader = me._createShaderProgram(postVshSource, decayFshSource);
+        
+        me._configureViewportDimensions();
+        me._createVertexBuffers();
+        me._createFrameBuffers();
+        
+        me.setPointSize(100);
+        me.setBleedFactor(0.8);
+        me.setExponentialDecay(0.99);
+        me.setLinearDecay(0.0005);
+        
+        me._position = {
+            x: 0,
+            y: 0
+        };
     };
     
     _.extend(Glow.prototype, {
@@ -34,6 +54,12 @@ define(['jquery', 'underscore', 'webgl',
         _decayIndex: 0,
         
         _pointQueue: null,
+        _position: null,
+        
+        _pointSize: null,
+        _bleedFactor: null,
+        _exponentialDecay: null,
+        _linearDecay: null,
         
         _createShaderProgram: function(vshSource, fshSource) {
             var me = this,
@@ -155,28 +181,75 @@ define(['jquery', 'underscore', 'webgl',
             });
         },
         
-        _setPointSize: function(size) {
-            var me = this;
-            
-            me._webgl.setUniformFloat(me._pointShader, size, 'u_pointSize');
+        getPointSize: function() {
+            return this._pointSize;
         },
         
-        _setBleedFactor: function(bleedFactor) {
+        setPointSize: function(size) {
             var me = this;
             
-            me._webgl.setUniformFloat(me._decayShader, bleedFactor, 'u_bleedFactor');
+            if (size >= 0 && size <= 300) {
+                me._pointSize = size;
+                me._webgl.setUniformFloat(me._pointShader, size, 'u_pointSize');
+            }
+            
+            return me._pointSize;
         },
         
-        _setExponentialDecay: function(exponentialDecay) {
+        setBleedFactor: function(bleedFactor) {
             var me = this;
+        
+            if (bleedFactor >= 0 && bleedFactor <= 1) {
+                me._bleedFactor = bleedFactor;
+                me._webgl.setUniformFloat(me._decayShader, bleedFactor, 'u_bleedFactor');   
+            }
             
-            me._webgl.setUniformFloat(me._decayShader, exponentialDecay, 'u_exponentialDecay');
+            return me._bleedFactor;
         },
         
-        _setLinearDecay: function(linearDecay) {
+        getBleedFactor: function() {
+            return this._bleedFactor;
+        },
+        
+        setExponentialDecay: function(exponentialDecay) {
+            var me = this;
+        
+            if (exponentialDecay >= 0 && exponentialDecay <= 1) {
+                me._exponentialDecay = exponentialDecay;
+                me._webgl.setUniformFloat(me._decayShader, exponentialDecay, 'u_exponentialDecay');
+            }    
+            
+            return me._exponentialDecay;
+        },
+        
+        getExponentialDecay: function() {
+            return this._exponentialDecay;
+        },
+        
+        setLinearDecay: function(linearDecay) {
+            var me = this;
+        
+            if (linearDecay >= 0 && linearDecay <= 1) {
+                me._linearDecay = linearDecay;
+                me._webgl.setUniformFloat(me._decayShader, linearDecay, 'u_linearDecay');
+            }
+            
+            return me._linearDecay;
+        },
+        
+        getLinearDecay: function() {
+            return this._linearDecay;
+        },
+        
+        drawAt: function(x, y) {
             var me = this;
             
-            me._webgl.setUniformFloat(me._decayShader, linearDecay, 'u_linearDecay');
+            if (typeof(x) === 'undefined') x = me._position.x;
+            if (typeof(y) === 'undefined') y = me._position.y;
+            
+            me._pointQueue.push(x, y);
+            
+            return me;
         },
         
         _setBlitTexture: function(textureIndex) {
@@ -203,11 +276,11 @@ define(['jquery', 'underscore', 'webgl',
                 gl = webgl.getContext();
             
             gl.bindBuffer(gl.ARRAY_BUFFER, me._vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(_.flatten(points)), gl.STREAM_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STREAM_DRAW);
             
             gl.useProgram(me._pointShader);
             webgl.bindBufferToAttribute(me._pointShader, me._vertexBuffer, 2, 'a_vertexPosition');
-            gl.drawArrays(gl.POINTS, 0, points.length);
+            gl.drawArrays(gl.POINTS, 0, points.length / 2);
         },
         
         _blit: function() {
@@ -242,7 +315,7 @@ define(['jquery', 'underscore', 'webgl',
             if (me._pointQueue && me._pointQueue.length > 0) {
                 me._drawPoints(me._pointQueue);
                 
-                me._pointQueue = null;
+                me._pointQueue.splice(0, me._pointQueue.length);
             }
             
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -271,25 +344,57 @@ define(['jquery', 'underscore', 'webgl',
             handler();
         },
         
-        run: function() {
+        moveTo: function(x, y) {
             var me = this;
             
-            me._webgl = new WebGl(me._canvas);
+            me._position.x = x;
+            me._position.y = y;
             
-            me._pointShader = me._createShaderProgram(pointVshSource, pointFshSource);
-            me._blitShader = me._createShaderProgram(postVshSource, blitFshSource);
-            me._decayShader = me._createShaderProgram(postVshSource, decayFshSource);
+            return me;
+        },
+        
+        drawTo: function(newx ,newy) {
+            var me = this,
+                oldx = me._position.x,
+                oldy = me._position.y,
+                deltax = newx - oldx,
+                deltay = newy - oldy,
+                dx = deltax >= 0 ? 1 : -1,
+                dy = deltax >= 0 ? 1 : -1,
+                x, y, slope;
             
-            me._configureViewportDimensions();
-            me._createVertexBuffers();
-            me._createFrameBuffers();
+            me.moveTo(newx, newy);
             
-            me._setPointSize(100);
-            me._setBleedFactor(0.8);
-            me._setExponentialDecay(0.99);
-            me._setLinearDecay(0.0005);
+            if (deltax === deltay === 0) return me.drawAt();
             
-            me._pointQueue = [[100, 100], [200, 200], [300, 200], [500, 200]];
+            if (Math.abs(deltax) >= Math.abs(deltay)) {
+                slope = deltay / deltax;
+                for (x = oldx; x !== newx; x += dx) {
+                    me._pointQueue.push(x, oldy + (x - oldx) * slope);
+                }
+            } else {
+                slope = deltax / deltay;
+                for (y = oldy; y !== newy; y += dy) {
+                    me._pointQueue.push(oldx + (y - oldy) * slope, y);
+                }
+            }
+            
+            return me;
+        },
+        
+        run: function() {
+            var me = this;
+
+            me._pointQueue = [100, 100, 200, 200, 300, 200, 500, 200];
+            
+            me
+                .drawAt(100, 100)
+                .drawAt(200, 200)
+                .drawAt(300, 200)
+                .drawAt(500, 200)
+                .moveTo(640, 480)
+                .drawTo(300, 350);
+            
             me._animate();
         }
     });
