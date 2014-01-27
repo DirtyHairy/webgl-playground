@@ -8,7 +8,7 @@ define(['jquery', 'underscore', 'webgl',
     
     "use strict";
     
-    var Glow = function(canvas) {
+    var Renderer = function(canvas) {
         var me = this;
         
         me._canvas = canvas;
@@ -25,16 +25,17 @@ define(['jquery', 'underscore', 'webgl',
         
         me.setPointSize(100);
         me.setBleedFactor(0.8);
-        me.setExponentialDecay(0.99);
-        me.setLinearDecay(0.0005);
+        me.setExponentialDecay(0.98);
+        me.setLinearDecay(0.005);
         
         me._position = {
             x: 0,
             y: 0
         };
+        me._pointQueue = [];
     };
     
-    _.extend(Glow.prototype, {
+    _.extend(Renderer.prototype, {
         _canvas: null,
         
         _webgl: null,
@@ -60,6 +61,8 @@ define(['jquery', 'underscore', 'webgl',
         _bleedFactor: null,
         _exponentialDecay: null,
         _linearDecay: null,
+        
+        _engaged: false,
         
         _createShaderProgram: function(vshSource, fshSource) {
             var me = this,
@@ -252,6 +255,26 @@ define(['jquery', 'underscore', 'webgl',
             return me;
         },
         
+        engage: function() {
+            var me = this;
+            
+            me._engaged = true;
+            
+            return me;
+        },
+        
+        disengage: function() {
+            var me = this;
+            
+            me._engaged = false;
+            
+            return me;
+        },
+        
+        engaged: function() {
+            return this._engaged;
+        },
+        
         _setBlitTexture: function(textureIndex) {
             var me = this,
                 gl = me._webgl.getContext(),
@@ -337,6 +360,9 @@ define(['jquery', 'underscore', 'webgl',
             var me = this;
             
             var handler = function() {
+                if (me._engaged) {
+                    me.drawAt();
+                }
                 me._draw();
                 setTimeout(_.bind(me._animate, me), 33);
             };
@@ -360,7 +386,7 @@ define(['jquery', 'underscore', 'webgl',
                 deltax = newx - oldx,
                 deltay = newy - oldy,
                 dx = deltax >= 0 ? 1 : -1,
-                dy = deltax >= 0 ? 1 : -1,
+                dy = deltay >= 0 ? 1 : -1,
                 x, y, slope;
             
             me.moveTo(newx, newy);
@@ -382,23 +408,13 @@ define(['jquery', 'underscore', 'webgl',
             return me;
         },
         
-        run: function() {
+        start: function() {
             var me = this;
-
-            me._pointQueue = [100, 100, 200, 200, 300, 200, 500, 200];
-            
-            me
-                .drawAt(100, 100)
-                .drawAt(200, 200)
-                .drawAt(300, 200)
-                .drawAt(500, 200)
-                .moveTo(640, 480)
-                .drawTo(300, 350);
             
             me._animate();
         }
     });
     
-    return Glow;
+    return Renderer;
     
 });
