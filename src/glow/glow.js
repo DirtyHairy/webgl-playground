@@ -27,10 +27,10 @@ define(['underscore', 'jquery', 'glow/renderer'],
 
             me._renderer.start();
             
-            me._canvas.mousedown(_.bind(me._onMouseEngage, me));
-            me._canvas.mousemove(_.bind(me._onMouseMove, me))
-            me._canvas.mouseup(_.bind(me._onMouseDisengage, me))
-            me._canvas.mouseout(_.bind(me._onMouseDisengage, me));
+            me._canvas
+                .mousedown(_.bind(me._onMouseEngage, me))
+                .mousemove(_.bind(me._onMouseMove, me));
+            $(document).mouseup(_.bind(me._onMouseDisengage, me));
         },
         
         _onMouseEngage: function(evt) {
@@ -56,6 +56,14 @@ define(['underscore', 'jquery', 'glow/renderer'],
             var me = this;
 
             me._renderer.disengage();
+        },
+        
+        _onMouseEnter: function(evt) {
+            var me = this;
+            
+            if (evt.buttons & 1 > 0) {
+                me._onMouseEngage(evt);
+            }
         }
     });
     
