@@ -29,8 +29,12 @@ define(['underscore', 'jquery', 'glow/renderer'],
             
             me._canvas
                 .mousedown(_.bind(me._onMouseEngage, me))
-                .mousemove(_.bind(me._onMouseMove, me));
-            $(document).mouseup(_.bind(me._onMouseDisengage, me));
+                .mousemove(_.bind(me._onMouseMove, me))
+                .on('touchstart', _.bind(me._onTouchEngage, me))
+                .on('touchmove', _.bind(me._onTouchMove, me));
+            $(document)
+                .mouseup(_.bind(me._onDisengage, me))
+                .on('touchend', _.bind(me._onDisengage, me));
         },
         
         _onMouseEngage: function(evt) {
@@ -47,23 +51,51 @@ define(['underscore', 'jquery', 'glow/renderer'],
             
             if (me._renderer.engaged()) {
                 var offset = me._canvas.offset();
+                
                 me._renderer.drawTo(evt.pageX - offset.left,
                     me._canvas.height() - evt.pageY + offset.top);
             }
         },
         
-        _onMouseDisengage: function() {
+        _onDisengage: function(evt) {
             var me = this;
 
             me._renderer.disengage();
+            evt.preventDefault();
         },
         
-        _onMouseEnter: function(evt) {
-            var me = this;
+        _onTouchEngage: function(evt) {
+            var me = this,
+                touch = me._getTouch(evt.originalEvent);
             
-            if (evt.buttons & 1 > 0) {
-                me._onMouseEngage(evt);
+            if (touch) {
+                var offset = me._canvas.offset();
+                
+                me._renderer.moveTo(touch.pageX - offset.left,
+                    me._canvas.height() - touch.pageY + offset.top);
+                me._renderer.engage();
+                
+                evt.preventDefault();
             }
+            
+        },
+        
+        _onTouchMove: function(evt) {
+            var me = this,
+                touch = me._getTouch(evt.originalEvent);
+            
+            if (touch) {
+                var offset = me._canvas.offset();
+                
+                me._renderer.drawTo(touch.pageX - offset.left,
+                    me._canvas.height() - touch.pageY + offset.top);
+                    
+                evt.preventDefault();
+            }
+        },
+        
+        _getTouch: function(evt) {
+            return evt.touches.length === 1 ? evt.touches[0] : null;
         }
     });
     
