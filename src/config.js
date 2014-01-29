@@ -19,7 +19,8 @@ requirejs.config({
         glmatrix: '../bower_components/gl-matrix/dist/gl-matrix-min',
         webglutils: '../vendor/webgl-utils',
         text: '../bower_components/text/text'
-    }
+    },
+    waitSeconds: 20
 });
 
 if (window.main) window.main();

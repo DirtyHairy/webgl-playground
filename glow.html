@@ -3,13 +3,42 @@
 
 <head>
 
+<style>
+    canvas {
+        float: left;
+        padding: 5px 5px 0 0;
+    }
+    
+    label {
+       display: inline-block;
+       width: 190px;
+    }
+
+    input {
+        width: 200px;
+    }
+
+    input-group {
+        padding: 0 5px 5px 0;
+    }
+    
+    #controls {
+        display: inline-block;
+    }
+</style>
+
 <script>
 
 function main() {
     require(['jquery', 'glow/glow'], function($, Glow) {
         $(function() {
             var canvas = $('#canvas').get(0),
-                glow = new Glow(canvas);
+                glow = new Glow(canvas, {
+                    radius: $('#radius'),
+                    bleed: $('#bleed'),
+                    exponentialDecay: $('#decay_exp'),
+                    linearDecay: $('#decay_lin')
+                });
                 
             glow.run();
         });
@@ -28,6 +57,25 @@ function main() {
 
 <canvas id="canvas" width="640" height="480">
 </canvas>
+
+<div id="controls">
+    <div class="input-group" id="radius">
+        <label for="radius">Radius: <span></span></label>
+        <input type="range" min="0" max="200" step="1" value="0" name="radius"/>
+    </div>
+</div>
+<div class="input-group" id="bleed">
+    <label for="bleed">Bleed: <span></span></label>
+    <input type="range" min="0" max="1" step="0.01" value="0" name="bleed"/>
+</div>
+<div class="input-group" id="decay_exp">
+    <label for="decay_exp">Exponential Decay: <span></span></label>
+    <input type="range" min="0" max="15" step="0.1" value="0" name="decay_exp"/>
+</div>
+<div class="input-group" id="decay_lin">
+    <label for="decay_lin">Linear Decay: <span></span></label>
+    <input type="range" min="0" max="0.2" step="0.001" value="0" name="decay_lin"/>
+</div>
 
 </body>
     

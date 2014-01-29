@@ -3,11 +3,30 @@ define(['underscore', 'jquery', 'glow/renderer'],
 {
     "use strict";
     
-    var Glow = function(canvas) {
+    var Glow = function(canvas, controls) {
         var me = this;
         
         me._renderer = new Renderer(canvas);
         me._canvas = $(canvas);
+        
+        if (controls) {
+            me._bindControl(controls.radius,
+                _.bind(me._renderer.getPointSize, me._renderer),
+                _.bind(me._renderer.setPointSize, me._renderer)
+            );
+            me._bindControl(controls.bleed,
+                _.bind(me._renderer.getBleedFactor, me._renderer),
+                _.bind(me._renderer.setBleedFactor, me._renderer)
+            );
+            me._bindControl(controls.exponentialDecay,
+                _.bind(me._getExponentialDecay, me),
+                _.bind(me._setExponentialDecay, me)
+            );
+            me._bindControl(controls.linearDecay,
+                _.bind(me._renderer.getLinearDecay, me._renderer),
+                _.bind(me._renderer.setLinearDecay, me._renderer)
+            );
+        }
     };
     
     _.extend(Glow.prototype, {
@@ -37,6 +56,37 @@ define(['underscore', 'jquery', 'glow/renderer'],
                 .on('touchend', _.bind(me._onDisengage, me));
         },
         
+        _bindControl: function(elt, getter, setter) {
+            if (!elt) return;
+            
+            var display = elt.find('span'),
+                control = elt.find('input');
+        
+            display.html(getter());
+            control.val(getter());
+            
+            control.change(function() {
+                var value = setter($(this).val());
+                    
+                display.html(value);
+                $(this).val(value);
+            });
+        },
+        
+        _setExponentialDecay: function(factor) {
+            var me = this;
+            
+            me._renderer.setExponentialDecay(Math.pow(0.5, factor));
+            return me._getExponentialDecay();
+        },
+        
+        _getExponentialDecay: function() {
+            var me = this,
+            factor = me._renderer.getExponentialDecay();
+            
+            return Number(-1.0 * Math.log(factor) / Math.log(2.0)).toFixed(2);
+        },
+        
         _onMouseEngage: function(evt) {
             var me = this,
                 offset = me._canvas.offset();
@@ -61,7 +111,6 @@ define(['underscore', 'jquery', 'glow/renderer'],
             var me = this;
 
             me._renderer.disengage();
-            evt.preventDefault();
         },
         
         _onTouchEngage: function(evt) {
