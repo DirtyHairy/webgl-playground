@@ -1,8 +1,8 @@
-define(['jquery', 'underscore', 'webgl',
+define(['jquery', 'underscore', 'webgl', 'observable',
         'text!shaders/glow_point.vsh', 'text!shaders/glow_point.fsh',
         'text!shaders/glow_post.vsh', 'text!shaders/glow_blit.fsh',
         'text!shaders/glow_decay.fsh'],
-    function($, _, WebGl, pointVshSource, pointFshSource, postVshSource,
+    function($, _, WebGl, Observable, pointVshSource, pointFshSource, postVshSource,
         blitFshSource, decayFshSource)
 {
     
@@ -10,6 +10,8 @@ define(['jquery', 'underscore', 'webgl',
     
     var Renderer = function(canvas) {
         var me = this;
+        
+        Observable.call(me);
         
         me._canvas = canvas;
         
@@ -34,6 +36,9 @@ define(['jquery', 'underscore', 'webgl',
         };
         me._pointQueue = [];
     };
+    
+    Renderer.prototype = Object.create(Observable.prototype);
+    Renderer.prototype.constructor = Renderer;
     
     _.extend(Renderer.prototype, {
         _canvas: null,
@@ -357,14 +362,26 @@ define(['jquery', 'underscore', 'webgl',
         },
         
         _animate: function() {
-            var me = this;
+            var me = this,
+                fpsReference = (new Date()).getTime(),
+                frames = 0;
             
             var handler = function() {
+                var timestamp = (new Date()).getTime();
+
+                if (timestamp - fpsReference > 1000) {
+                    me.fireEvent('fpsUpdate', 1000 * frames / (timestamp - fpsReference));
+                    fpsReference = timestamp;
+                    frames = 0;
+                } else {
+                    frames++;
+                }
+                
                 if (me._engaged) {
                     me.drawAt();
                 }
                 me._draw();
-                setTimeout(_.bind(me._animate, me), 33);
+                setTimeout(_.bind(handler, me), 33);
             };
             
             handler();

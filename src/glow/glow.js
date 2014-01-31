@@ -27,6 +27,14 @@ define(['underscore', 'jquery', 'glow/renderer'],
                 _.bind(me._renderer.setLinearDecay, me._renderer)
             );
         }
+        
+        if (controls.fpsDisplay) {
+            me._renderer.attachListeners({
+                fpsUpdate: function(fps) {
+                    controls.fpsDisplay.find('span').html(Number(fps).toFixed(2));
+                }
+            });   
+        }
     };
     
     _.extend(Glow.prototype, {

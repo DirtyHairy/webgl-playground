@@ -6,7 +6,7 @@
 <style>
     canvas {
         float: left;
-        padding: 5px 5px 0 0;
+        padding: 0 5px 5px 5px;
     }
     
     label {
@@ -22,9 +22,19 @@
         padding: 0 5px 5px 0;
     }
     
+    #fps_processing div {
+        display: inline-block;
+        padding-right: 5px;
+    }
+    
+    fps-display {
+        padding: 5px 0 5px 0;
+    }
+    
     #controls {
         display: inline-block;
     }
+ 
 </style>
 
 <script>
@@ -37,7 +47,8 @@ function main() {
                     radius: $('#radius'),
                     bleed: $('#bleed'),
                     exponentialDecay: $('#decay_exp'),
-                    linearDecay: $('#decay_lin')
+                    linearDecay: $('#decay_lin'),
+                    fpsDisplay: $('#fps_processing')
                 });
                 
             glow.run();
@@ -59,22 +70,25 @@ function main() {
 </canvas>
 
 <div id="controls">
+    <div id="fps_processing" class="fps-display">
+        <div>Processing FPS:</div><span>N/A</span>
+    </div>
     <div class="input-group" id="radius">
         <label for="radius">Radius: <span></span></label>
         <input type="range" min="0" max="200" step="1" value="0" name="radius"/>
     </div>
-</div>
-<div class="input-group" id="bleed">
+    <div class="input-group" id="bleed">
     <label for="bleed">Bleed: <span></span></label>
     <input type="range" min="0" max="1" step="0.01" value="0" name="bleed"/>
+    </div>
+    <div class="input-group" id="decay_exp">
+        <label for="decay_exp">Exponential Decay: <span></span></label>
+        <input type="range" min="0" max="15" step="0.1" value="0" name="decay_exp"/>
+    </div>
+    <div class="input-group" id="decay_lin">
+        <label for="decay_lin">Linear Decay: <span></span></label>
+        <input type="range" min="0" max="0.2" step="0.001" value="0" name="decay_lin"/>
 </div>
-<div class="input-group" id="decay_exp">
-    <label for="decay_exp">Exponential Decay: <span></span></label>
-    <input type="range" min="0" max="15" step="0.1" value="0" name="decay_exp"/>
-</div>
-<div class="input-group" id="decay_lin">
-    <label for="decay_lin">Linear Decay: <span></span></label>
-    <input type="range" min="0" max="0.2" step="0.001" value="0" name="decay_lin"/>
 </div>
 
 </body>
