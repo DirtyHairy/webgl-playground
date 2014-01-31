@@ -22,7 +22,7 @@
         padding: 0 5px 5px 0;
     }
     
-    #fps_processing div {
+    #fps_display div {
         display: inline-block;
         padding-right: 5px;
     }
@@ -48,7 +48,8 @@ function main() {
                     bleed: $('#bleed'),
                     exponentialDecay: $('#decay_exp'),
                     linearDecay: $('#decay_lin'),
-                    fpsDisplay: $('#fps_processing')
+                    fpsDisplay: $('#fps_display'),
+                    targetFPS: $('#target_fps')
                 });
                 
             glow.run();
@@ -70,7 +71,7 @@ function main() {
 </canvas>
 
 <div id="controls">
-    <div id="fps_processing" class="fps-display">
+    <div id="fps_display" class="fps-display">
         <div>Processing FPS:</div><span>N/A</span>
     </div>
     <div class="input-group" id="radius">
@@ -88,7 +89,12 @@ function main() {
     <div class="input-group" id="decay_lin">
         <label for="decay_lin">Linear Decay: <span></span></label>
         <input type="range" min="0" max="0.2" step="0.001" value="0" name="decay_lin"/>
-</div>
+    </div>
+    <div class="input-group" id="target_fps">
+        <label for="target_fps">Target FPS: <span></span></label>
+        <input type="range" min="1" max="200" step="1" value="1"
+            name="target_fps"/>
+    </div>
 </div>
 
 </body>

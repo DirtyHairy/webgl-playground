@@ -67,6 +67,8 @@ define(['jquery', 'underscore', 'webgl', 'observable',
         _exponentialDecay: null,
         _linearDecay: null,
         
+        _targetFPS: 30,
+        
         _engaged: false,
         
         _createShaderProgram: function(vshSource, fshSource) {
@@ -249,6 +251,20 @@ define(['jquery', 'underscore', 'webgl', 'observable',
             return this._linearDecay;
         },
         
+        setTargetFPS: function(fps) {
+            var me = this;
+            
+            if (fps > 0 && fps <= 200) {
+                me._targetFPS = fps;   
+            }
+            
+            return fps;
+        },
+        
+        getTargetFPS: function() {
+            return this._targetFPS;
+        },
+        
         drawAt: function(x, y) {
             var me = this;
             
@@ -381,7 +397,8 @@ define(['jquery', 'underscore', 'webgl', 'observable',
                     me.drawAt();
                 }
                 me._draw();
-                setTimeout(_.bind(handler, me), 33);
+                
+                setTimeout(_.bind(handler, me), 1000 / me._targetFPS - ((new Date()).getTime() - timestamp));
             };
             
             handler();

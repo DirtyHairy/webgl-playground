@@ -26,6 +26,10 @@ define(['underscore', 'jquery', 'glow/renderer'],
                 _.bind(me._renderer.getLinearDecay, me._renderer),
                 _.bind(me._renderer.setLinearDecay, me._renderer)
             );
+            me._bindControl(controls.targetFPS,
+                _.bind(me._renderer.getTargetFPS, me._renderer),
+                _.bind(me._renderer.setTargetFPS, me._renderer)
+            );
         }
         
         if (controls.fpsDisplay) {
