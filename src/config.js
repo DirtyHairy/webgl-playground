@@ -14,11 +14,12 @@ requirejs.config({
         }
     },
     paths: {
-        jquery: '../bower_components/jquery/jquery.min',
+        jquery: '../bower_components/jquery/dist/jquery.min',
         underscore: '../bower_components/lodash/dist/lodash.min',
         glmatrix: '../bower_components/gl-matrix/dist/gl-matrix-min',
         webglutils: '../vendor/webgl-utils',
-        text: '../bower_components/text/text'
+        text: '../bower_components/text/text',
+        q: '../bower_components/q/q'
     },
     waitSeconds: 20
 });

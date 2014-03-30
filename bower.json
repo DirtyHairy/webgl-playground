@@ -12,6 +12,7 @@
         "lodash": "2.*",
         "requirejs": "2.*",
         "text": "2.*",
-        "gl-matrix": "2.2.*"
+        "gl-matrix": "2.2.*",
+        "q": "1.*"
     }
 }

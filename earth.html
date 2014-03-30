@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+<script>
+
+function main() {
+    require(['jquery', 'earth'], function($, Earth) {
+        $(function() {
+            var canvas = $('#canvas').get(0),
+                earth = new Earth(canvas);
+                
+            earth.run();
+        });
+    });
+}
+    
+</script>
+
+<script data-main="src/config.js" src="bower_components/requirejs/require.js"></script>
+    
+</head>
+
+<body>
+
+<canvas id="canvas" width="800" height="600">
+</canvas>
+
+</body>
+    
+</html>
