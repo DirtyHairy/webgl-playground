@@ -1,4 +1,4 @@
-define(['lodash', 'Q'],
+define(['underscore', 'q'],
     function(_, Q)
 {
     'use strict';
@@ -25,6 +25,9 @@ define(['lodash', 'Q'],
             parameters.flipY : false;
 
         me._glTexture = gl.createTexture();
+
+        me.setTextureUnit(parameters.hasOwnProperty('textureUnit') ?
+            parameters.textureUnit : 0);
         me.bind();
 
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, me._wrapS);
@@ -32,14 +35,12 @@ define(['lodash', 'Q'],
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, me._minFilter);
         gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, me._maxFilter);
 
-        me._faceReady = {};
-        me._faceInitialized = {};
+        me._faceDeferreds = {};
         _.each(['posx', 'negx', 'posy', 'negy', 'posz', 'negz'], function(face) {
             me._faceDeferreds[face] = Q.defer();
-            me._faceInitialized[face] = false;
         });
 
-        me._ready = Q.all(_(me._faceReady)
+        me._ready = Q.all(_(me._faceDeferreds)
             .values()
             .map(function(deferred) {
                 return deferred.promise;
@@ -50,7 +51,7 @@ define(['lodash', 'Q'],
         if (me.mipmap()) {
             me._ready = me._ready
                 .then(function() {
-                    me._bind();
+                    me.bind();
                     gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
                 });
         }
@@ -65,26 +66,91 @@ define(['lodash', 'Q'],
         POSZ: 'posz',
         NEGZ: 'negz',
 
+        _format: null,
+        _type: null,
+        _minFilter: null,
+        _maxFilter: null,
+        _wrapS: null,
+        _wrapT: null,
+        _flipY: null,
+
+        _ready: null,
+        _faceDeferreds: null,
+        _glTexture: null,
+
+        _textureUnit: null,
+        _textureUnitEnum: null,
+
+        setTextureUnit: function(unit) {
+            var me = this,
+                gl = me._webGl.getContext();
+
+            me._textureUnit = unit;
+            me._textureUnitEnum = gl['TEXTURE' + unit];
+
+            return me;
+        },
+
+        getTextureUnit: function() {
+            return this._textureUnit;
+        },
+
         bind: function() {
             var me = this,
                 gl = me._webGl.getContext();
 
+            gl.activeTexture(me._textureUnitEnum);
             gl.bindTexture(gl.TEXTURE_CUBE_MAP, me._glTexture);
+
+            return this;
         },
 
         mipmap: function() {
             var me = this,
                 gl = me._webGl.getContext();
 
-            return  me.minFilter === gl.NEAREST_MIPMAP_LINEAR || 
-                    me.minFilter === gl.LINEAR_MIPMAP_LINEAR;
+            return  me._minFilter === gl.NEAREST_MIPMAP_LINEAR || 
+                    me._minFilter === gl.LINEAR_MIPMAP_LINEAR;
         },
 
-        loadFace: function() {
+        _faceConstant: function(face) {
             var me = this,
                 gl = me._webGl.getContext();
-        }
 
+            switch (face) {
+                case me.POSX: return gl.TEXTURE_CUBE_MAP_POSITIVE_X;
+                case me.NEGX: return gl.TEXTURE_CUBE_MAP_NEGATIVE_X;
+                case me.POSY: return gl.TEXTURE_CUBE_MAP_POSITIVE_Y;
+                case me.NEGY: return gl.TEXTURE_CUBE_MAP_NEGATIVE_Y;
+                case me.POSZ: return gl.TEXTURE_CUBE_MAP_POSITIVE_Z;
+                case me.NEGZ: return gl.TEXTURE_CUBE_MAP_NEGATIVE_Z;
+            }
+
+            return undefined;
+        },
+
+        loadFace: function(face, url) {
+            var me = this,
+                gl = me._webGl.getContext();
+
+            var image = new Image();
+            image.onload = function() {
+                me.bind();
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, me._flipY);
+                gl.texImage2D(me._faceConstant(face), 0,
+                    me._format, me._format, me._type, image);
+
+                me._faceDeferreds[face].resolve();
+            };
+
+            image.src = url;
+
+            return this;
+        },
+
+        ready: function() {
+            return this._ready;
+        }
     });
 
     return TextureCube;

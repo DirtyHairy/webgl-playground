@@ -1,5 +1,7 @@
-define(['underscore', 'webglutils', 'glmatrix'],
-    function(_, WebGLUtils)
+/* global console */
+
+define(['underscore', 'webglutils', 'glmatrix', 'webgl/texture'],
+    function(_, WebGLUtils, glmatrix, texture)
 {
     "use strict";
     
@@ -16,6 +18,10 @@ define(['underscore', 'webglutils', 'glmatrix'],
             return this._gl;
         },
         
+        createTextureCube: function(parameters) {
+            return new texture.Cube(this, parameters);
+        },
+
         createShaderFromSource: function(source, type) {
             var me = this,
                 gl = me.getContext(),
@@ -82,7 +88,7 @@ define(['underscore', 'webglutils', 'glmatrix'],
         
         bindBufferToAttribute: function(program, buffer, itemSize, name) {
             var me = this,
-                gl = this.getContext(),
+                gl = me.getContext(),
                 location = gl.getAttribLocation(program, name);
         
             if (location === null) throw new Error('Unable to determine attribute location');

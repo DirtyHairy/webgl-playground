@@ -62,43 +62,22 @@ define(['underscore', 'jquery', 'q', 'webgl', 'geometry', 'glmatrix',
             var me = this,
                 gl = me._webGl.getContext();
 
-            gl.activeTexture(gl.TEXTURE0);
-            me._texture = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_CUBE_MAP, me._texture);
-
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-
-            var faces = [
-                ["res/earth/posx.jpg", gl.TEXTURE_CUBE_MAP_POSITIVE_X],
-                ["res/earth/negx.jpg", gl.TEXTURE_CUBE_MAP_NEGATIVE_X],
-                ["res/earth/posy.jpg", gl.TEXTURE_CUBE_MAP_POSITIVE_Y],
-                ["res/earth/negy.jpg", gl.TEXTURE_CUBE_MAP_NEGATIVE_Y],
-                ["res/earth/posz.jpg", gl.TEXTURE_CUBE_MAP_POSITIVE_Z],
-                ["res/earth/negz.jpg", gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]
-            ];
-
-            var promises = _.map(faces, function(face) {
-                var deferred = Q.defer(),
-                    image = new Image();
-
-                image.onload = function() {
-                    gl.texImage2D(face[1], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-                    deferred.resolve();
-                };
-
-                image.src = face[0];
-
-                return deferred.promise;
+            var texture = me._webGl.createTextureCube({
+                minFilter: gl.LINEAR_MIPMAP_LINEAR,
+                maxFilter: gl.LINEAR
             });
 
-            return Q.all(promises)
-                .then(function() {
-                    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-                });
+            texture
+                .loadFace(texture.NEGX, 'res/earth/negx.jpg')
+                .loadFace(texture.POSX, 'res/earth/posx.jpg')
+                .loadFace(texture.NEGY, 'res/earth/negy.jpg')
+                .loadFace(texture.POSY, 'res/earth/posy.jpg')
+                .loadFace(texture.NEGZ, 'res/earth/negz.jpg')
+                .loadFace(texture.POSZ, 'res/earth/posz.jpg');
+
+            me._texture = texture;
+
+            return texture.ready();
         },
 
         _createSphere: function() {
@@ -182,7 +161,7 @@ define(['underscore', 'jquery', 'q', 'webgl', 'geometry', 'glmatrix',
                 gl = me._webGl.getContext(),
                 location = gl.getUniformLocation(me._shaderProgram, 'u_textureUnit');
                 
-            gl.uniform1i(location, 0);
+            gl.uniform1i(location, me._texture.getTextureUnit());
         },
 
         run: function() {
