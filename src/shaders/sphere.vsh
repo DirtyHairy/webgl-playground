@@ -1,5 +1,4 @@
 attribute vec4 a_vertexPosition;
-attribute vec4 a_vertexColor;
 
 varying vec3 v_normal;
 varying vec4 v_position;

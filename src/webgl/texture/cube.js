@@ -17,7 +17,7 @@ define(['underscore', 'q'],
             parameters.minFilter : gl.LINEAR;
         me._maxFilter = parameters.hasOwnProperty('maxFilter') ?
             parameters.maxFilter : gl.LINEAR;
-        me._wrapS = parameters.hasOwnProperty('wrapS') ? 
+        me._wrapS = parameters.hasOwnProperty('wrapS') ?
             parameters.wrapS : gl.CLAMP_TO_EDGE;
         me._wrapT = parameters.hasOwnProperty('wrapT') ?
             parameters.wrapT : gl.CLAMP_TO_EDGE;
@@ -109,7 +109,7 @@ define(['underscore', 'q'],
             var me = this,
                 gl = me._webGl.getContext();
 
-            return  me._minFilter === gl.NEAREST_MIPMAP_LINEAR || 
+            return  me._minFilter === gl.NEAREST_MIPMAP_LINEAR ||
                     me._minFilter === gl.LINEAR_MIPMAP_LINEAR;
         },
 
@@ -129,14 +129,18 @@ define(['underscore', 'q'],
             return undefined;
         },
 
-        loadFace: function(face, url) {
+        loadFace: function(face, url, flipY) {
             var me = this,
                 gl = me._webGl.getContext();
+
+            if (typeof(flipY) === "undefined") {
+                flipY = me._flipY;
+            }
 
             var image = new Image();
             image.onload = function() {
                 me.bind();
-                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, me._flipY);
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
                 gl.texImage2D(me._faceConstant(face), 0,
                     me._format, me._format, me._type, image);
 
@@ -146,6 +150,55 @@ define(['underscore', 'q'],
             image.src = url;
 
             return this;
+        },
+
+        loadAllFaces: function(url) {
+            var me = this,
+                gl = me._webGl.getContext();
+
+            var image = new Image();
+            image.onload = function() {
+                var faceWidth = Math.floor(this.width / 4),
+                    faceHeight = Math.floor(this.height / 3),
+                    canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d');
+
+                canvas.width = faceWidth;
+                canvas.height = faceHeight;
+
+                me.bind();
+
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, me._flipY);
+
+                function blit(ix, iy) {
+                    ctx.drawImage(image,
+                        ix * faceWidth, iy * faceHeight, faceWidth, faceHeight,
+                        0, 0, faceWidth, faceHeight);
+                }
+
+                function loadTexture(face) {
+                    gl.texImage2D(face, 0, me._format, me._format, me._type, canvas);
+                }
+
+                blit(1, 0);
+                loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Y);
+                blit(0, 1);
+                loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_X);
+                blit(1, 1);
+                loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_Z);
+                blit(2, 1);
+                loadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X);
+                blit(3, 1);
+                loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z);
+                blit(1, 2);
+                loadTexture(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y);
+
+                _.forEach(me._faceDeferreds, function(deferred) {
+                    deferred.resolve();
+                });
+            };
+
+            image.src = url;
         },
 
         ready: function() {
